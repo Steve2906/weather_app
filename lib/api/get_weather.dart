@@ -13,21 +13,15 @@ Future<List<ListItem>?> getWeather(double lat, double lng) async {
   var uri = Uri.https(Constants.WEATHER_BASE_URL,
       Constants.WEATHER_FORECAST_URL, queryParameters);
   var response = await http.get(uri);
-  print(response.body);
   if (response.statusCode == 200) {
-    print("200");
     var forecastResponse =
     ForecastResponseEntity.fromJson(jsonDecode(response.body));
     if (forecastResponse.cod == "200") {
-      print("200");
       return forecastResponse.list;
     } else {
       print("Error ${forecastResponse.cod}");
     }
   } else {
-    print(Constants.WEATHER_BASE_URL);
-    print(Constants.WEATHER_FORECAST_URL);
-    print(queryParameters);
     print("Error occured while loading data from server");
   }
 }
