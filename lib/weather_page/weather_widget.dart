@@ -49,7 +49,7 @@ class HeadingListItem extends StatelessWidget implements ListItem {
 }
 
 class WeatherListItem extends StatelessWidget implements ListItem {
-  static var _dateFormat = DateFormat('yyyy-MM-dd - hh:mm');
+  static var _dateFormat = DateFormat('hh:mm');
   final ForecastResponseList weather;
   WeatherListItem(this.weather);
   @override
@@ -57,10 +57,11 @@ class WeatherListItem extends StatelessWidget implements ListItem {
     return Padding(
       padding: const EdgeInsetsDirectional.fromSTEB(16, 0, 16, 0),
       child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Expanded(child: Text((weather.main.temp - 273).roundToDouble().toString() + " C"), flex: 1),
-          Expanded(child: Text(weather.dtTxt), flex: 2),
-          Expanded(child: Image.network(weather.weather.first.getIconUrl()), flex: 1)
+          Text(_dateFormat.format(DateTime.fromMillisecondsSinceEpoch(weather.dt * 1000))),
+          Padding(padding: EdgeInsetsDirectional.fromSTEB(15, 0, 15, 0), child: Image.network(weather.weather.first.getIconUrl())),
+          Text("${(weather.main.temp - 273).roundToDouble()} C"),
         ],
       ),
     );

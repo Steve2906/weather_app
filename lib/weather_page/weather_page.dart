@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:geocoding/geocoding.dart';
 import 'package:permission_handler/permission_handler.dart';
+import 'package:weather_app/inherited_widgets/location_info.dart';
 import 'package:weather_app/weather_page/weather_widget.dart';
 import '../api/get_weather.dart';
 import '../generated/forecast_response_entity.dart';
@@ -20,7 +21,7 @@ class WeatherPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const WeatherForecastPage("Moscow");
+    return const LocationInheritedWidget(child: WeatherForecastPage("Moscow"));
   }
 }
 
@@ -37,6 +38,10 @@ class _WeatherForecastPageState extends State<WeatherForecastPage> {
   var _isLoading = true;
   List<ListItem> weatherForecast = <ListItem>[];
   CurrentLocation deviceLocation = CurrentLocation();
+
+  Future<void> _onRefresh() async {
+    loadData();
+  }
 
   Future<CurrentLocation?> getLocation() async {
     CurrentLocation deviceLocationLocal = CurrentLocation();
@@ -55,7 +60,21 @@ class _WeatherForecastPageState extends State<WeatherForecastPage> {
   }
 
   @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    var locationInfo = LocationInfo.of(context);
+    deviceLocation.lat = locationInfo!.position.latitude;
+    deviceLocation.lng = locationInfo.position.longitude;
+    loadData();
+  }
+
+  @override
   void initState() {
+    super.initState();
+    loadData();
+  }
+
+  void loadData() {
     var checkpermission = requestpermission();
     checkpermission.then((permission) {
       var itCurrentDay = DateTime.now();
@@ -93,7 +112,7 @@ class _WeatherForecastPageState extends State<WeatherForecastPage> {
         });
       });
     });
-    super.initState();
+    setState(() {});
   }
 
   @override
@@ -136,17 +155,19 @@ class _WeatherForecastPageState extends State<WeatherForecastPage> {
   }
 
   Widget get _contentView {
-    return ListView.builder(
-        itemCount: weatherForecast == null ? 0 : weatherForecast.length,
-        itemBuilder: (BuildContext context, int index) {
-          final item = weatherForecast[index];
-          if (item is ForecastResponseList) {
-            return WeatherListItem(item);
-          } else if (item is DayHeading) {
-            return HeadingListItem(item);
-          } else {
-            throw Exception("wrong type");
-          }
-        });
+    return RefreshIndicator(
+        onRefresh: _onRefresh,
+        child: ListView.builder(
+            itemCount: weatherForecast == null ? 0 : weatherForecast.length,
+            itemBuilder: (BuildContext context, int index) {
+              final item = weatherForecast[index];
+              if (item is ForecastResponseList) {
+                return WeatherListItem(item);
+              } else if (item is DayHeading) {
+                return HeadingListItem(item);
+              } else {
+                throw Exception("wrong type");
+              }
+            }));
   }
 }
