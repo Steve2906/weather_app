@@ -3,6 +3,7 @@ import 'package:geolocator/geolocator.dart';
 import 'package:geocoding/geocoding.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:weather_app/inherited_widgets/location_info.dart';
+import 'package:weather_app/places_page/places_page.dart';
 import 'package:weather_app/weather_page/weather_widget.dart';
 import '../api/get_weather.dart';
 import '../generated/forecast_response_entity.dart';
@@ -13,34 +14,33 @@ abstract class ListItem {}
 class CurrentLocation {
   double lat = 55.751244;
   double lng = 37.618423;
-  String place = "Moscow";
-}
-
-class WeatherPage extends StatelessWidget {
-  const WeatherPage({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return const LocationInheritedWidget(child: WeatherForecastPage("Moscow"));
-  }
+  String place = "Loading...";
 }
 
 class WeatherForecastPage extends StatefulWidget {
-  const WeatherForecastPage(this.cityName, {super.key});
-  final String cityName;
+  final Locations place;
+  const WeatherForecastPage(this.place, {super.key});
+
   @override
   State<StatefulWidget> createState() {
-    return _WeatherForecastPageState();
+    return _WeatherForecastPageState(place);
   }
 }
 
 class _WeatherForecastPageState extends State<WeatherForecastPage> {
+  _WeatherForecastPageState(this.place);
+
+  Locations place;
   var _isLoading = true;
   List<ListItem> weatherForecast = <ListItem>[];
   CurrentLocation deviceLocation = CurrentLocation();
 
   Future<void> _onRefresh() async {
-    loadData();
+    if (place.place == "nullplace") {
+      loadData();
+    } else {
+      loadPlaceData();
+    }
   }
 
   Future<CurrentLocation?> getLocation() async {
@@ -59,19 +59,26 @@ class _WeatherForecastPageState extends State<WeatherForecastPage> {
     }
   }
 
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    var locationInfo = LocationInfo.of(context);
-    deviceLocation.lat = locationInfo!.position.latitude;
-    deviceLocation.lng = locationInfo.position.longitude;
-    loadData();
+  Future<bool?> requestpermission() async {
+    var status = await Permission.location.status;
+    if (status.isDenied) {
+      Navigator.push(
+          context, MaterialPageRoute(builder: (context) => const noGPSPage()));
+    }
+    if (status.isGranted) {
+      return true;
+    }
+    return true;
   }
 
   @override
   void initState() {
     super.initState();
-    loadData();
+    if (place.place == "nullplace") {
+      loadData();
+    } else {
+      loadPlaceData();
+    }
   }
 
   void loadData() {
@@ -115,6 +122,44 @@ class _WeatherForecastPageState extends State<WeatherForecastPage> {
     setState(() {});
   }
 
+  void loadPlaceData() {
+    var checkpermission = requestpermission();
+    checkpermission.then((permission) {
+      var itCurrentDay = DateTime.now();
+      weatherForecast.add(DayHeading(itCurrentDay));
+      _isLoading = true;
+      deviceLocation.place = place.place;
+      var dataFuture = getWeather(place.lat, place.lng);
+      dataFuture.then((val) {
+        List<ListItem> weatherForecastLocal = [];
+        weatherForecastLocal.add(DayHeading(itCurrentDay));
+        List<ListItem> weatherData = val!;
+        var itNextDay = DateTime.now().add(const Duration(days: 1));
+        itNextDay = DateTime(
+            itNextDay.year, itNextDay.month, itNextDay.day, 0, 0, 0, 0, 1);
+        var iterator = weatherData.iterator;
+        while (iterator.moveNext()) {
+          var weatherDateTime = iterator.current as ForecastResponseList;
+          if (DateTime.fromMillisecondsSinceEpoch(weatherDateTime.dt * 1000)
+              .isAfter(itNextDay)) {
+            itCurrentDay = itNextDay;
+            itNextDay = itCurrentDay.add(const Duration(days: 1));
+            itNextDay = DateTime(
+                itNextDay.year, itNextDay.month, itNextDay.day, 0, 0, 0, 0, 1);
+            weatherForecastLocal.add(DayHeading(itCurrentDay));
+          } else {
+            weatherForecastLocal.add(iterator.current);
+          }
+          setState(() {
+            weatherForecast = weatherForecastLocal;
+          });
+          _isLoading = false;
+        }
+      });
+    });
+    setState(() {});
+  }
+
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
@@ -122,22 +167,11 @@ class _WeatherForecastPageState extends State<WeatherForecastPage> {
       theme: ThemeData(primarySwatch: Colors.blue),
       home: Scaffold(
           appBar: AppBar(
+            leading: IconButton(icon: Icon(Icons.navigate_before), onPressed: () { Navigator.pop(context); },),
             title: Text(deviceLocation.place),
           ),
           body: _pageToDisplay),
     );
-  }
-
-  Future<bool?> requestpermission() async {
-    var status = await Permission.location.status;
-    if (status.isDenied) {
-      Navigator.push(
-          context, MaterialPageRoute(builder: (context) => const noGPSPage()));
-    }
-    if (status.isGranted) {
-      return true;
-    }
-    return true;
   }
 
   Widget get _pageToDisplay {

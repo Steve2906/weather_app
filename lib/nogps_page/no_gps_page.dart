@@ -12,6 +12,7 @@ class noGPSPage extends StatefulWidget {
 }
 
 class _noGPSPageState extends State<noGPSPage> {
+  var place = null;
   var location = false;
   @override
   Widget build(BuildContext context) {
@@ -55,7 +56,7 @@ class _noGPSPageState extends State<noGPSPage> {
                     child: MaterialButton(
                         color: Colors.blue,
                         onPressed: () {Navigator.push(context,
-                            MaterialPageRoute(builder: (context) => const WeatherPage()));},
+                            MaterialPageRoute(builder: (context) => WeatherForecastPage(place)));},
                         textColor: Colors.white,
                         child: const Text("Continue"))),
               )
@@ -71,7 +72,7 @@ class _noGPSPageState extends State<noGPSPage> {
     if (status.isDenied) {}
     if (status.isGranted) {
       Navigator.push(context,
-          MaterialPageRoute(builder: (context) => const WeatherPage()));
+          MaterialPageRoute(builder: (context) => WeatherForecastPage(place)));
     }
   }
 
