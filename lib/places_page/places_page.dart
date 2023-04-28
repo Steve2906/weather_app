@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:permission_handler/permission_handler.dart';
+import 'package:weather_app/map_page/map_page.dart';
+import '../nogps_page/no_gps_page.dart';
 import '../weather_page/weather_page.dart';
 
 class Locations {
@@ -24,50 +27,80 @@ class _PlacesPageState extends State<PlacesPage> {
   ];
   Locations nullplace = Locations(0.0, 0.0, "nullplace");
 
+  Future<bool?> requestpermission() async {
+    var status = await Permission.location.status;
+    if (status.isDenied) {
+      Navigator.push(
+          context, MaterialPageRoute(builder: (context) => const noGPSPage()));
+    }
+    if (status.isGranted) {
+      return true;
+    }
+    return true;
+  }
+  initState() {
+    requestpermission();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-        appBar: AppBar(
-          title: Text("Places"),
+      appBar: AppBar(
+
+        title: Text("Places"),
+      ),
+      body: Column(children: <Widget>[
+        Row(
+          mainAxisAlignment: MainAxisAlignment.start,
+          children: <Widget>[
+            Expanded(
+                child: InkWell(
+              onTap: () => {
+                Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                        builder: (context) => WeatherForecastPage(nullplace)))
+              },
+              child: const Padding(
+                padding: EdgeInsets.all(16.0),
+                child: Text("Current position",
+                    textAlign: TextAlign.left,
+                    style: TextStyle(
+                      fontSize: 16.0,
+                      color: Colors.black,
+                    )),
+              ),
+            )),
+            const Divider(height: 4, thickness: 2)
+          ],
         ),
-        body: Column(children: <Widget>[
-          Row(
-            mainAxisAlignment: MainAxisAlignment.start,
-            children: <Widget>[
-              Expanded(
-                  child: InkWell(
-                onTap: () => {Navigator.push(context,
-    MaterialPageRoute(builder: (context) => WeatherForecastPage(nullplace)))},
-                child: const Padding(
-                  padding: EdgeInsets.all(16.0),
-                  child: Text("Current position",
-                      textAlign: TextAlign.left,
-                      style: TextStyle(
-                        fontSize: 16.0,
-                        color: Colors.black,
-                      )),
-                ),
-              )),
-              const Divider(height: 4, thickness: 2)
-            ],
-          ),
-          Expanded(
-              child: ListView.builder(
-                  itemCount: _places.length,
-                  itemBuilder: (context, index) {
-                    final place = _places[index];
-                    return Dismissible(
-                        key: Key(place.place),
-                        onDismissed: (direction) {
-                          setState(() {
-                            _places.removeAt(index);
-                          });
-                        },
-                        child: ListTile(
-                            title: Text(place.place),
-                            onTap: () => _onItemTapped(place)),);
-                  })),
-        ]));
+        Expanded(
+            child: ListView.builder(
+                itemCount: _places.length,
+                itemBuilder: (context, index) {
+                  final place = _places[index];
+                  return Dismissible(
+                    key: Key(place.place),
+                    onDismissed: (direction) {
+                      setState(() {
+                        _places.removeAt(index);
+                      });
+                    },
+                    child: ListTile(
+                        title: Text(place.place),
+                        onTap: () => _onItemTapped(place)),
+                  );
+                })),
+      ]),
+      floatingActionButton: FloatingActionButton(
+          onPressed: () {
+            Navigator.push(
+                context,
+                MaterialPageRoute(
+                    builder: (context) => MapPage()));
+          },
+          child: const Icon(Icons.add, color: Colors.white)),
+    );
   }
 
   void _onItemTapped(Locations place) {

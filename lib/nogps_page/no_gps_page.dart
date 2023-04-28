@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:permission_handler/permission_handler.dart';
+import 'package:weather_app/places_page/places_page.dart';
 import 'package:weather_app/weather_page/weather_page.dart';
 
 class noGPSPage extends StatefulWidget {
@@ -55,8 +56,7 @@ class _noGPSPageState extends State<noGPSPage> {
                     padding: const EdgeInsetsDirectional.fromSTEB(0, 0, 0, 0),
                     child: MaterialButton(
                         color: Colors.blue,
-                        onPressed: () {Navigator.push(context,
-                            MaterialPageRoute(builder: (context) => WeatherForecastPage(place)));},
+                        onPressed: () {Navigator.pop(context);},
                         textColor: Colors.white,
                         child: const Text("Continue"))),
               )
@@ -71,15 +71,13 @@ class _noGPSPageState extends State<noGPSPage> {
     var status = await Permission.location.status;
     if (status.isDenied) {}
     if (status.isGranted) {
-      Navigator.push(context,
-          MaterialPageRoute(builder: (context) => WeatherForecastPage(place)));
+      Navigator.pop(context);
     }
   }
 
   void requestpermission() async {
     await Permission.location.request();
     location = true;
-    print(location);
     setState(() {
 
     });
