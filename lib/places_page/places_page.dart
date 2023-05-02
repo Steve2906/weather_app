@@ -1,31 +1,20 @@
 import 'package:flutter/material.dart';
 import 'package:permission_handler/permission_handler.dart';
+import 'package:weather_app/database/db_provider.dart';
 import 'package:weather_app/map_page/map_page.dart';
+import '../database/locations.dart';
 import '../nogps_page/no_gps_page.dart';
 import '../weather_page/weather_page.dart';
 
-class Locations {
-  double lat = 55.751244;
-  double lng = 37.618423;
-  String place = "Loading...";
-
-  Locations(this.lat, this.lng, this.place);
-}
-
 class PlacesPage extends StatefulWidget {
-  PlacesPage({Key? key}) : super(key: key);
+  const PlacesPage({Key? key}) : super(key: key);
 
   _PlacesPageState createState() => _PlacesPageState();
 }
 
 class _PlacesPageState extends State<PlacesPage> {
-  Locations place = Locations(55.7532, 37.6206, "Moscow");
-  final _places = [
-    Locations(55.7532, 37.6206, "Moscow"),
-    Locations(40.7715, -73.9739, "New York"),
-    Locations(53.893009, 27.567444, "Minsk"),
-  ];
-  Locations nullplace = Locations(0.0, 0.0, "nullplace");
+  late List<Locations> allLocations;
+  bool _isLoading = true;
 
   Future<bool?> requestpermission() async {
     var status = await Permission.location.status;
@@ -38,16 +27,34 @@ class _PlacesPageState extends State<PlacesPage> {
     }
     return true;
   }
+
+  @override
   initState() {
+    super.initState();
+    loadData();
     requestpermission();
+  }
+
+  Future<void> refreshPage() async {
+    loadData();
+  }
+
+  void loadData() {
+    var getAllLoc = getAllLocations();
+    getAllLoc.then((value) {
+      setState(() {
+        allLocations = value;
+        _isLoading = false;
+      });
+    });
   }
 
   @override
   Widget build(BuildContext context) {
+    loadData();
     return Scaffold(
       appBar: AppBar(
-
-        title: Text("Places"),
+        title: const Text("Places"),
       ),
       body: Column(children: <Widget>[
         Row(
@@ -66,7 +73,7 @@ class _PlacesPageState extends State<PlacesPage> {
                 child: Text("Current position",
                     textAlign: TextAlign.left,
                     style: TextStyle(
-                      fontSize: 16.0,
+                      fontSize: 18.0,
                       color: Colors.black,
                     )),
               ),
@@ -74,33 +81,49 @@ class _PlacesPageState extends State<PlacesPage> {
             const Divider(height: 4, thickness: 2)
           ],
         ),
-        Expanded(
-            child: ListView.builder(
-                itemCount: _places.length,
-                itemBuilder: (context, index) {
-                  final place = _places[index];
-                  return Dismissible(
-                    key: Key(place.place),
-                    onDismissed: (direction) {
-                      setState(() {
-                        _places.removeAt(index);
-                      });
-                    },
-                    child: ListTile(
-                        title: Text(place.place),
-                        onTap: () => _onItemTapped(place)),
-                  );
-                })),
+        const Divider(height: 1.4,color: Colors.black),
+        Expanded(child: _pageToDisplay),
       ]),
       floatingActionButton: FloatingActionButton(
           onPressed: () {
-            Navigator.push(
-                context,
-                MaterialPageRoute(
-                    builder: (context) => MapPage()));
+            Navigator.push(context,
+                MaterialPageRoute(builder: (context) => const MapPage()));
           },
           child: const Icon(Icons.add, color: Colors.white)),
     );
+  }
+
+  Widget get _pageToDisplay {
+    if (_isLoading) {
+      return _loadingView;
+    } else {
+      return _contentView;
+    }
+  }
+
+  Widget get _loadingView {
+    return const Center(
+      child: CircularProgressIndicator(),
+    );
+  }
+
+  Widget get _contentView {
+    return RefreshIndicator(
+        onRefresh: refreshPage,
+        child: ListView.builder(
+            itemCount: allLocations.length,
+            itemBuilder: (context, index) {
+              final place = allLocations[index];
+              return Dismissible(
+                key: Key(place.place),
+                onDismissed: (direction) {
+                  deleteLocations(locations: allLocations[index]);
+                },
+                child: ListTile(
+                    title: Text(place.place),
+                    onTap: () => _onItemTapped(place)),
+              );
+            }));
   }
 
   void _onItemTapped(Locations place) {

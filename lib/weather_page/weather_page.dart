@@ -2,10 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:geocoding/geocoding.dart';
 import 'package:permission_handler/permission_handler.dart';
-import 'package:weather_app/inherited_widgets/location_info.dart';
-import 'package:weather_app/places_page/places_page.dart';
 import 'package:weather_app/weather_page/weather_widget.dart';
 import '../api/get_weather.dart';
+import '../database/locations.dart';
 import '../generated/forecast_response_entity.dart';
 import '../nogps_page/no_gps_page.dart';
 
@@ -167,7 +166,7 @@ class _WeatherForecastPageState extends State<WeatherForecastPage> {
       theme: ThemeData(primarySwatch: Colors.blue),
       home: Scaffold(
           appBar: AppBar(
-            leading: IconButton(icon: Icon(Icons.navigate_before), onPressed: () { Navigator.pop(context); },),
+            leading: IconButton(icon: const Icon(Icons.navigate_before), onPressed: () { Navigator.pop(context); },),
             title: Text(deviceLocation.place),
           ),
           body: _pageToDisplay),

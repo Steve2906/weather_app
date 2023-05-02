@@ -13,7 +13,7 @@ class Weather extends ListItem {
   String iconURL;
 
   String getIconUrl() {
-    return weatherURL + iconURL + ".png";
+    return "$weatherURL$iconURL.png";
   }
 
   Weather(this.dateTime, this.degree, this.clouds, this.iconURL);
@@ -26,15 +26,15 @@ class DayHeading extends ListItem {
 }
 
 class HeadingListItem extends StatelessWidget implements ListItem {
-  static var _dateFormatWeekDay = DateFormat('EEEE');
-  static var _dateFormatMonth = DateFormat('MMMM');
+  static final _dateFormatWeekDay = DateFormat('EEEE');
+  static final _dateFormatMonth = DateFormat('MMMM');
   final DayHeading dayHeading;
 
-  HeadingListItem(this.dayHeading);
+  const HeadingListItem(this.dayHeading, {super.key});
 
   @override
   Widget build(BuildContext context) {
-    return Padding(padding: EdgeInsetsDirectional.fromSTEB(0, 10, 0, 0),
+    return Padding(padding: const EdgeInsetsDirectional.fromSTEB(0, 10, 0, 0),
       child: ListTile(
       title: Column(
         children: [
@@ -49,9 +49,9 @@ class HeadingListItem extends StatelessWidget implements ListItem {
 }
 
 class WeatherListItem extends StatelessWidget implements ListItem {
-  static var _dateFormat = DateFormat('hh:mm');
+  static final _dateFormat = DateFormat('hh:mm');
   final ForecastResponseList weather;
-  WeatherListItem(this.weather);
+  const WeatherListItem(this.weather, {super.key});
   @override
   Widget build(BuildContext context) {
     return Padding(
@@ -60,7 +60,7 @@ class WeatherListItem extends StatelessWidget implements ListItem {
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Text(_dateFormat.format(DateTime.fromMillisecondsSinceEpoch(weather.dt * 1000))),
-          Padding(padding: EdgeInsetsDirectional.fromSTEB(15, 0, 15, 0), child: Image.network(weather.weather.first.getIconUrl())),
+          Padding(padding: const EdgeInsetsDirectional.fromSTEB(15, 0, 15, 0), child: Image.network(weather.weather.first.getIconUrl())),
           Text("${(weather.main.temp - 273).roundToDouble()} C"),
         ],
       ),
